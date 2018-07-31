@@ -11,6 +11,7 @@ const pkg = require('./package.json');
 const browserSync = require('browser-sync').create();
 const webpackConfig = require('./webpack.config');
 const testWebpackConfig = require('./webpack.test.config');
+const watch = require('gulp-watch');
 
 const banner = '/*! <%= pkg.name %> - v<%= pkg.version %> | <%= new Date().getFullYear() %> */\n';
 
@@ -45,6 +46,13 @@ gulp.task('build-script', ['test'], () => (
         .pipe(gulp.dest('./lib/'))
 ));
 
+gulp.task('build-script-watch', ['test'], () => (
+    watch(['./src/index.js'])
+        .pipe(webpackStream(webpackConfig, webpack))
+        .pipe(header(banner, { pkg }))
+        .pipe(gulp.dest('./lib/'))
+));
+
 gulp.task('build-style', () => (
     gulp.src('./src/scss/**/*.scss')
         .pipe(scsslint())
@@ -58,7 +66,22 @@ gulp.task('build-style', () => (
         .pipe(gulp.dest('./lib'))
 ));
 
+gulp.task('build-style-watch', () => (
+    watch('./src/scss/**/*.scss')
+        .pipe(scsslint())
+        .pipe(scsslint.failReporter())
+        .pipe(sass({
+            outputStyle: 'expanded',
+        }).on('error', sass.logError))
+        .pipe(autoprefixer({
+            browsers: ['last 2 versions'],
+        }))
+        .pipe(gulp.dest('./lib'))
+));
+
 gulp.task('build', ['build-script', 'build-style']);
+
+gulp.task('build:watch', ['build-script-watch', 'build-style-watch']);
 
 gulp.task('build-examples-style', () => (
     gulp.src('./examples/src/scss/**/*.scss')
